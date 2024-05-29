@@ -13,6 +13,7 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Dropout, LayerNormalization
 from tensorflow.keras import Model
 from tensorflow.keras.optimizers import Adam
+from sklearn.preprocessing import StandardScaler
 
 dataset_path = 'dataset/Single_EDFA_Dataset.csv'
 
@@ -117,11 +118,11 @@ def simple_resnet_block(input_tensor, units, use_projection=False):
 
 def build_nn_model(input_dim, output_dim):
     inputs = Input(shape=(input_dim,))
-    x = Dense(256, activation='relu')(inputs)
+    x = Dense(256, activation='linear')(inputs)
 
     # x = simple_resnet_block(x, 256)
     x = simple_resnet_block(x, 128, use_projection=True)
-    x = Dense(64, activation='relu')(x)
+    # x = Dense(128, activation='linear')(x)
 
     outputs = Dense(output_dim, activation='linear')(x)
 
@@ -131,6 +132,11 @@ def build_nn_model(input_dim, output_dim):
 
 
 def test_nn(X, y, interval):
+    scaler_X = StandardScaler()
+    scaler_y = StandardScaler()
+
+    X = scaler_X.fit_transform(X)
+    y = scaler_y.fit_transform(y)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     mse_list = []
@@ -148,9 +154,12 @@ def test_nn(X, y, interval):
 
         y_pred = model.predict(X_test)
 
-        mse = mean_squared_error(y_test, y_pred)
-        mae = mean_absolute_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
+        y_pred_inverse = scaler_y.inverse_transform(y_pred)
+        y_test_inverse = scaler_y.inverse_transform(y_test)
+
+        mse = mean_squared_error(y_test_inverse, y_pred_inverse)
+        mae = mean_absolute_error(y_test_inverse, y_pred_inverse)
+        r2 = r2_score(y_test_inverse, y_pred_inverse)
 
         mse_list.append(mse)
         mae_list.append(mae)
