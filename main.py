@@ -6,20 +6,29 @@ from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 import time
 
-from tools.utils import read_dataset, test_knn, draw, test_rf, test_nn
+from tools.utils import read_dataset, test_knn, draw, test_rf, test_res, test_nn
 
 
 if __name__ == '__main__':
     input_interval = [1, 2, 5, 10, 20]
     algorithms = ['NN']
     matrices = ['MSE', 'MAE', 'R2']
+    parameters = ['selu', 'linear', 'sigmoid']
     result = {}
     for algorithm in algorithms:
         result[algorithm] = {}
-        for matrix in matrices:
-            result[algorithm][matrix] = {}
-            for interval in input_interval:
-                result[algorithm][matrix][interval] = []
+        if algorithm != 'RES' and algorithm != 'NN':
+            for matrix in matrices:
+                result[algorithm][matrix] = {}
+                for interval in input_interval:
+                    result[algorithm][matrix][interval] = []
+        else:
+            for parameter in parameters:
+                result[algorithm][parameter] = {}
+                for matrix in matrices:
+                    result[algorithm][parameter][matrix] = {}
+                    for interval in input_interval:
+                        result[algorithm][parameter][matrix][interval] = []
     print(result)
     for n in input_interval:
         X, y = read_dataset(n)
@@ -31,10 +40,17 @@ if __name__ == '__main__':
         result['RF']['MSE'][n] = rf_mse
         result['RF']['MAE'][n] = rf_mae
         result['RF']['R2'][n] = rf_r2"""
-        nn_mse, nn_mae, nn_r2 = test_nn(X, y, n)
-        result['NN']['MSE'][n] = nn_mse
-        result['NN']["MAE"][n] = nn_mae
-        result['NN']["R2"][n] = nn_r2
+        """for activate in parameters:
+            res_mse, res_mae, res_r2 = test_res(X, y, n, activate)
+            result['RES'][activate]['MSE'][n] = res_mse
+            result['RES'][activate]["MAE"][n] = res_mae
+            result['RES'][activate]["R2"][n] = res_r2"""
+        for activate in parameters:
+            res_mse, res_mae, res_r2 = test_nn(X, y, n, activate)
+            result['NN'][activate]['MSE'][n] = res_mse
+            result['NN'][activate]["MAE"][n] = res_mae
+            result['NN'][activate]["R2"][n] = res_r2
+
 
     # print(result)
     for algorithm in algorithms:

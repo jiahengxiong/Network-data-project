@@ -116,7 +116,7 @@ def simple_resnet_block(input_tensor, units, use_projection=False):
     return x
 
 
-def build_nn_model(input_dim, output_dim):
+def build_res_model(input_dim, output_dim, activate):
     inputs = Input(shape=(input_dim,))
     x = Dense(256, activation='linear')(inputs)
 
@@ -124,14 +124,14 @@ def build_nn_model(input_dim, output_dim):
     x = simple_resnet_block(x, 128, use_projection=True)
     # x = Dense(128, activation='linear')(x)
 
-    outputs = Dense(output_dim, activation='linear')(x)
+    outputs = Dense(output_dim, activation=activate)(x)
 
     model = Model(inputs, outputs)
     model.compile(optimizer=Adam(learning_rate=0.001), loss='mse')
     return model
 
 
-def test_nn(X, y, interval):
+def test_res(X, y, interval, activate):
     scaler_X = StandardScaler()
     scaler_y = StandardScaler()
 
@@ -148,7 +148,59 @@ def test_nn(X, y, interval):
     epochs_list = range(10, 210, 10)
 
     for epochs in epochs_list:
-        model = build_nn_model(input_dim, output_dim)
+        model = build_res_model(input_dim, output_dim, activate)
+
+        model.fit(X_train, y_train, epochs=epochs, batch_size=1024, verbose=0)
+
+        y_pred = model.predict(X_test)
+
+        y_pred_inverse = scaler_y.inverse_transform(y_pred)
+        y_test_inverse = scaler_y.inverse_transform(y_test)
+
+        mse = mean_squared_error(y_test_inverse, y_pred_inverse)
+        mae = mean_absolute_error(y_test_inverse, y_pred_inverse)
+        r2 = r2_score(y_test_inverse, y_pred_inverse)
+
+        mse_list.append(mse)
+        mae_list.append(mae)
+        r2_list.append(r2)
+
+    return mse_list, mae_list, r2_list
+
+
+def build_nn_model(input_dim, output_dim, activate):
+    inputs = Input(shape=(input_dim,))
+    x = Dense(256, activation='linear')(inputs)
+
+    # x = simple_resnet_block(x, 256)
+    x = Dense(128, activation='linear')(x)
+    x = Dense(128, activation='linear')(x)
+
+    outputs = Dense(output_dim, activation=activate)(x)
+
+    model = Model(inputs, outputs)
+    model.compile(optimizer=Adam(learning_rate=0.001), loss='mse')
+    return model
+
+
+def test_nn(X, y, interval, activate):
+    scaler_X = StandardScaler()
+    scaler_y = StandardScaler()
+
+    X = scaler_X.fit_transform(X)
+    y = scaler_y.fit_transform(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    mse_list = []
+    mae_list = []
+    r2_list = []
+
+    input_dim = X_train.shape[1]
+    output_dim = y_train.shape[1]
+    epochs_list = range(10, 210, 10)
+
+    for epochs in epochs_list:
+        model = build_nn_model(input_dim, output_dim, activate)
 
         model.fit(X_train, y_train, epochs=epochs, batch_size=1024, verbose=0)
 
@@ -169,15 +221,14 @@ def test_nn(X, y, interval):
 
 
 def draw(data, algorithm, matrix):
-    if algorithm not in data or matrix not in data[algorithm]:
+    """if algorithm not in data or matrix not in data[algorithm]:
         print(f"No data available for algorithm '{algorithm}' and matrix '{matrix}'.")
-        return
-
-    matrix_data = data[algorithm][matrix]
+        return"""
 
     plt.figure(figsize=(10, 6))
 
     if algorithm == 'KNN':
+        matrix_data = data[algorithm][matrix]
         for key in matrix_data:
             plt.plot(range(1, len(matrix_data[key]) + 1), matrix_data[key], label=f'{key} interval of input',
                      marker='o',
@@ -191,6 +242,7 @@ def draw(data, algorithm, matrix):
         plt.savefig(f'result/fig/knn/{algorithm}-{matrix}.png')
         plt.show()
     if algorithm == 'RF':
+        matrix_data = data[algorithm][matrix]
         for key in matrix_data:
             plt.plot(range(10, 10 * len(matrix_data[key]) + 10, 10), matrix_data[key], label=f'{key} interval of input',
                      marker='o',
@@ -203,18 +255,28 @@ def draw(data, algorithm, matrix):
         plt.grid(True)
         plt.savefig(f'result/fig/rf/{algorithm}-{matrix}.png')
         plt.show()
-    if algorithm == 'NN':
-        for key in matrix_data:
-            plt.plot(range(10, 10 * len(matrix_data[key]) + 10, 10), matrix_data[key], label=f'{key} interval of input',
-                     marker='o',
-                     linestyle='-')
+    if algorithm == 'RES' or algorithm == 'NN':
+        res_data = data[algorithm]
+        for activate in res_data:
+            matrix_data = res_data[activate][matrix]
+            for key in matrix_data:
+                if activate == 'linear':
+                    plt.plot(range(10, 10 * len(matrix_data[key]) + 10, 10), matrix_data[key],
+                             label=f'{key} interval of input with {activate} activation',
+                             marker='o',
+                             linestyle='-')
+                else:
+                    plt.plot(range(10, 10 * len(matrix_data[key]) + 10, 10), matrix_data[key],
+                             label=f'{key} interval of input with {activate} activation',
+                             marker='o',
+                             linestyle='--')
         plt.title(f'{algorithm} - {matrix} Over Different epoch Values')
         plt.xlabel('epoch')
         plt.ylabel(matrix)
         plt.xticks(range(10, 210, 10))
         plt.legend()
         plt.grid(True)
-        plt.savefig(f'result/fig/nn/{algorithm}-{matrix}.png')
+        plt.savefig(f'result/fig/{algorithm}/{algorithm}-{matrix}.png')
         plt.show()
 
 
