@@ -262,19 +262,19 @@ def draw(data, algorithm, matrix):
             for key in matrix_data:
                 if activate == 'linear':
                     plt.plot(range(10, 10 * len(matrix_data[key]) + 10, 10), matrix_data[key],
-                             label=f'{key} interval of input with {activate} activation',
+                             label=f'{key} interval input-{activate} activation',
                              marker='o',
                              linestyle='-')
                 else:
                     plt.plot(range(10, 10 * len(matrix_data[key]) + 10, 10), matrix_data[key],
-                             label=f'{key} interval of input with {activate} activation',
+                             label=f'{key} interval input-{activate} activation',
                              marker='o',
                              linestyle='--')
         plt.title(f'{algorithm} - {matrix} Over Different epoch Values')
         plt.xlabel('epoch')
         plt.ylabel(matrix)
         plt.xticks(range(10, 210, 10))
-        plt.legend()
+        plt.legend(ncol=2)
         plt.grid(True)
         plt.savefig(f'result/fig/{algorithm}/{algorithm}-{matrix}.png')
         plt.show()
