@@ -147,10 +147,10 @@ def test_res(X, y, interval, activate):
     output_dim = y_train.shape[1]
     epochs_list = range(10, 210, 10)
 
+    model = build_res_model(input_dim, output_dim, activate)
     for epochs in epochs_list:
-        model = build_res_model(input_dim, output_dim, activate)
 
-        model.fit(X_train, y_train, epochs=epochs, batch_size=1024, verbose=0)
+        model.fit(X_train, y_train, epochs=10, batch_size=1024, verbose=0)
 
         y_pred = model.predict(X_test)
 
@@ -198,11 +198,11 @@ def test_nn(X, y, interval, activate):
     input_dim = X_train.shape[1]
     output_dim = y_train.shape[1]
     epochs_list = range(10, 210, 10)
+    model = build_nn_model(input_dim, output_dim, activate)
 
     for epochs in epochs_list:
-        model = build_nn_model(input_dim, output_dim, activate)
 
-        model.fit(X_train, y_train, epochs=epochs, batch_size=1024, verbose=0)
+        model.fit(X_train, y_train, epochs=10, batch_size=1024, verbose=0)
 
         y_pred = model.predict(X_test)
 
@@ -276,7 +276,7 @@ def draw(data, algorithm, matrix):
         plt.xticks(range(10, 210, 10))
         plt.legend(ncol=2)
         plt.grid(True)
-        plt.savefig(f'result/fig/{algorithm}/{algorithm}-{matrix}.png')
+        plt.savefig(f'result/fig/nn/{algorithm}-{matrix}.png')
         plt.show()
 
 
