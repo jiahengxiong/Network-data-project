@@ -14,6 +14,8 @@ from tensorflow.keras.layers import Dense, Dropout, LayerNormalization
 from tensorflow.keras import Model
 from tensorflow.keras.optimizers import Adam
 from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.losses import MeanSquaredError
+
 
 dataset_path = 'dataset/Single_EDFA_Dataset.csv'
 
@@ -127,7 +129,7 @@ def build_res_model(input_dim, output_dim, activate):
     outputs = Dense(output_dim, activation=activate)(x)
 
     model = Model(inputs, outputs)
-    model.compile(optimizer=Adam(learning_rate=0.001), loss='mse')
+    model.compile(optimizer=Adam(learning_rate=0.001), loss=MeanSquaredError())
     return model
 
 
@@ -165,6 +167,8 @@ def test_res(X, y, interval, activate):
         mae_list.append(mae)
         r2_list.append(r2)
 
+    model.save(f'models/res_net/res_net_{interval}_{activate}.h5')
+
     return mse_list, mae_list, r2_list
 
 
@@ -179,7 +183,7 @@ def build_nn_model(input_dim, output_dim, activate):
     outputs = Dense(output_dim, activation=activate)(x)
 
     model = Model(inputs, outputs)
-    model.compile(optimizer=Adam(learning_rate=0.001), loss='mse')
+    model.compile(optimizer=Adam(learning_rate=0.001), loss=MeanSquaredError())
     return model
 
 
@@ -216,6 +220,8 @@ def test_nn(X, y, interval, activate):
         mse_list.append(mse)
         mae_list.append(mae)
         r2_list.append(r2)
+
+    model.save(f'models/nn/nn_{interval}_{activate}.h5')
 
     return mse_list, mae_list, r2_list
 

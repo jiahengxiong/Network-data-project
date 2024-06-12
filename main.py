@@ -11,7 +11,7 @@ from tools.utils import read_dataset, test_knn, draw, test_rf, test_res, test_nn
 
 if __name__ == '__main__':
     input_interval = [1, 2, 5, 10, 20]
-    algorithms = ['RES']
+    algorithms = ['RES', 'NN']
     matrices = ['MSE', 'MAE', 'R2']
     parameters = ['selu', 'linear', 'sigmoid']
     result = {}
@@ -45,11 +45,11 @@ if __name__ == '__main__':
             result['RES'][activate]['MSE'][n] = res_mse
             result['RES'][activate]["MAE"][n] = res_mae
             result['RES'][activate]["R2"][n] = res_r2
-        """for activate in parameters:
+        for activate in parameters:
             res_mse, res_mae, res_r2 = test_nn(X, y, n, activate)
             result['NN'][activate]['MSE'][n] = res_mse
             result['NN'][activate]["MAE"][n] = res_mae
-            result['NN'][activate]["R2"][n] = res_r2"""
+            result['NN'][activate]["R2"][n] = res_r2
 
 
     # print(result)
