@@ -13,39 +13,53 @@ if __name__ == '__main__':
     model = load_model('models/res_net/res_net_1_linear.h5')
     model.compile(optimizer=Adam(learning_rate=0.001), loss=MeanSquaredError())
     X, y = read_dataset(1)
+    y_names = list(y.columns)
+    X_names = list(X.columns)
+    X = np.array(X)
+    y = np.array(y)
 
     print(X.shape, y.shape)
-    y_name = list(y.columns)
-    X_name = list(X.columns)
     scaler_X = StandardScaler()
     scaler_y = StandardScaler()
 
-    X = scaler_X.fit_transform(X)
-    y = scaler_y.fit_transform(y)
+    # 不进行标准化处理，确保数据的原始值用于解释
+    # X = scaler_X.fit_transform(X)
+    # y = scaler_y.fit_transform(y)
 
-    X_train_sample = shap.sample(X, 100)
+    X_train_sample = shap.sample(X, 200)
+    print(X_names)
 
     # 使用 KernelExplainer 进行解释
     explainer_shap = shap.KernelExplainer(model.predict, X_train_sample)
 
     # 控制计算的精度和速度
-    shap_values = explainer_shap.shap_values(X, nsamples=100)
+    shap_values = explainer_shap.shap_values(X)
 
-    shap.summary_plot(shap_values, scaler_X.inverse_transform(X), feature_names=X_name, show=False)
-    plt.title("Summary Plot")
-    fig = plt.gcf()
-    ax = fig.gca()
-    ax.get_legend().remove()
-    plt.savefig(f'result/XAI/Summary_Plot.png')
-    plt.show()
+    # 打印shap_values的类型和形状，以便调试
+    print(f"shap_values type: {type(shap_values)}")
+    if isinstance(shap_values, np.ndarray):
+        print(f"shap_values shape: {shap_values.shape}")
 
-    for i in range(len(y_name)):
-        name = y_name[i]
-        shap.summary_plot(shap_values[i], scaler_X.inverse_transform(X), feature_names=X_name, show=False, max_display=10)
-        plt.title(f'Summary Plot for {name}')
-        plt.savefig(f'result/XAI/Summary_Plot_for_{name}.png')
-        plt.show()
+        # 确保shap_values的形状是 (100, 84, 84)
+        if shap_values.shape[1] == X_train_sample.shape[1] and shap_values.shape[2] == X_train_sample.shape[1]:
+            """shap.summary_plot(shap_values, X_train_sample, show=False)
+            plt.title("Summary Plot")
+            fig = plt.gcf()
+            ax = fig.gca()
+            # ax.get_legend().remove()
+            fig.savefig(f'result/XAI/Summary_Plot.png')"""
+            for i in range(shap_values.shape[2]):
+                shap.summary_plot(shap_values[:, :, i], X, feature_names=X_names, show=False)
+                plt.title(f"Summary Plot for Output Feature {i}")
+                plt.savefig(f'result/XAI/Summary_Plot_Output_Feature_{i}.png')
+                # plt.show()
 
-    shap.dependence_plot('0', shap_values[0], scaler_X.inverse_transform(X), feature_names=X_name, interaction_index='1')
-    plt.savefig(f'result/XAI/dependence_plot.png')
-    plt.show()
+            # 选取一个输出特征绘制依赖图
+            shap.dependence_plot('inat156589', shap_values[81], X, feature_names=X_names,
+                                 interaction_index='inat156683')
+            plt.savefig('result/XAI/dependence_plot.png')
+            # plt.show()
+        else:
+            print("Error: shap_values shape does not match expected dimensions.")
+    else:
+        print("shap_values is not in the expected format.")
